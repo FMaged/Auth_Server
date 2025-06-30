@@ -1,6 +1,6 @@
 ﻿
 using Domain.Interfaces.Services;
-using Domain.ValueObjects.User.UserPassword.Helpers;
+using Domain.ValueObjects.User.Helpers;
 using System.Text.RegularExpressions;
 
 namespace Domain.Validators
@@ -14,7 +14,7 @@ namespace Domain.Validators
         }
 
 
-        public bool Validate(string value, out List<string> errors)
+        public  bool Validate(string value, out List<string> errors)
         {
             errors = new List<string>();
             if (string.IsNullOrWhiteSpace(value) || value.Length < _options.MinLength)

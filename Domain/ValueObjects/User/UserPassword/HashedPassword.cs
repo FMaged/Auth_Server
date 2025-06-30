@@ -1,6 +1,5 @@
 ﻿using Domain.Enums;
 using Domain.Shared;
-using Domain.ValueObjects.User.UserPassword.Helpers;
 using System.Text.RegularExpressions;
 
 namespace Domain.ValueObjects.User.UserPassword
@@ -9,26 +8,21 @@ namespace Domain.ValueObjects.User.UserPassword
     {
 
         public string Hash { get; }
-        public string Salt { get; }
-        public HashingAlgorithm Algorithm { get; }
+        private static readonly string Pattern = @"^\$argon2id\$v=(\d+)\$m=(\d+),t=(\d+),p=(\d+)\$([A-Za-z0-9+/]+={0,2})\$([A-Za-z0-9+/]+={0,2})$";
 
-        private HashedPassword(string hashedPassword, string salt, HashingAlgorithm algorithm)
+        private HashedPassword(string hashedPassword)
         {
             Hash = hashedPassword;
-            Salt = salt;
-            Algorithm = algorithm;
+
         }
 
-        public static Result<HashedPassword> Create(string password, string salt, HashingAlgorithm algorithm)
+        public static Result<HashedPassword> Create(string password)
         {
             if (string.IsNullOrEmpty(password))
                 return Result<HashedPassword>.Failure("Password hash cannot be empty");
-            if (!HashingOptions.HashPatterns.TryGetValue(algorithm, out var pattern))
-                return Result<HashedPassword>.Failure("Unsupported hashing algorithm");
-            if (!Regex.IsMatch(password, pattern))
+
+            if (!Regex.IsMatch(password, Pattern))
                 return Result<HashedPassword>.Failure("Invalid hash format for algorithm");
-            if (string.IsNullOrEmpty(salt))
-                return Result<HashedPassword>.Failure("Salt cannot be empty");
 
 
 
@@ -36,7 +30,8 @@ namespace Domain.ValueObjects.User.UserPassword
 
 
 
-            return Result<HashedPassword>.Success(new HashedPassword(password, salt, algorithm));
+
+            return Result<HashedPassword>.Success(new HashedPassword(password));
         }
 
 
@@ -48,8 +43,6 @@ namespace Domain.ValueObjects.User.UserPassword
         protected override IEnumerable<object> GetEqualityComponents()
         {
             yield return Hash;
-            yield return Salt;
-            yield return Algorithm;
         }
     }
 }

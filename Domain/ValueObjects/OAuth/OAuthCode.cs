@@ -49,7 +49,7 @@ namespace Domain.ValueObjects.OAuth
 
             return Result<OAuthCode>.Success(new OAuthCode(
                 value: code.Trim(),
-                codeVerifier: codeVerifier?.Trim(),
+                codeVerifier: codeVerifier.Trim(),
                 redirectUri: redirectUri.Trim()));
 
         }

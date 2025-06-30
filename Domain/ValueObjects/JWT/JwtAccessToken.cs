@@ -1,4 +1,5 @@
 ﻿using Domain.Shared;
+using System.Security.Claims;
 using System.Text.RegularExpressions;
 
 namespace Domain.ValueObjects.JWT
@@ -13,11 +14,11 @@ namespace Domain.ValueObjects.JWT
         public string Issuer { get; }
         public string Audience { get; }
         public DateTime IssuedAt { get; }
-        public IReadOnlyDictionary<string, string> Claims { get; }
+        public List<Claim> Claims { get; }
         private JwtAccessToken(string value, Guid subject, Guid jWTId, DateTime expiry, string issuer,
                                 string audience,
                                 DateTime issuedAt,
-                                IReadOnlyDictionary<string, string> claims)
+                                List<Claim> claims)
         {
             Value = value;
             Subject = subject;
@@ -37,7 +38,7 @@ namespace Domain.ValueObjects.JWT
                                 string issuer,
                                 string audience,
                                 DateTime issuedAt,
-                                IReadOnlyDictionary<string, string> claims,Guid jwtId)
+                                List<Claim> claims,Guid jwtId)
         {
             if (string.IsNullOrEmpty(value))
                 return Result<JwtAccessToken>.Failure("Token cannot be empty");

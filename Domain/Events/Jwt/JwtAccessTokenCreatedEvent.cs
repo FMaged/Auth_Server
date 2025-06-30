@@ -1,5 +1,6 @@
 ﻿using Domain.ValueObjects.JWT;
 using Domain.ValueObjects.User;
+using System.Security.Claims;
 
 namespace Domain.Events.Jwt
 {
@@ -14,12 +15,12 @@ namespace Domain.Events.Jwt
         public string Audience { get; }
         public DateTime Expiry { get; }
 
-        public IReadOnlyDictionary<string, string> Claims { get; }
+        public List<Claim> Claims { get; }
 
 
         public JwtAccessTokenCreatedEvent(Guid userId, DeviceFingerprint deviceFingerprint,
                     IpAddress ipAddress, Guid jWTId, string issuer, string audience, DateTime expiry,
-                    IReadOnlyDictionary<string, string> claims)
+                    List<Claim> claims)
         {
             OccurredOn = DateTime.UtcNow;
             UserId = userId;

@@ -10,14 +10,15 @@ namespace Domain.ValueObjects
     {
         public string CountryCode { get; }
         public string Number { get; }
-
-        private PhoneNumber(string countryCode, string number)
+        public bool IsVerified { get; }
+        private PhoneNumber(string countryCode, string number, bool isVerified)
         {
             CountryCode = countryCode;
             Number = number;
+            IsVerified = isVerified;
         }
 
-        public static Result<PhoneNumber> Create(string countryCode, string number)
+        public static Result<PhoneNumber> Create(string countryCode, string number, bool isVerified=false)
         {
             PhoneNumberValidator validator = new PhoneNumberValidator();
             if (!validator.Validate(countryCode, number, out List<string> errors))
@@ -25,9 +26,11 @@ namespace Domain.ValueObjects
 
 
 
-            return Result<PhoneNumber>.Success(new PhoneNumber(countryCode.Trim(), number.Trim()));
+            return Result<PhoneNumber>.Success(new PhoneNumber(countryCode.Trim(), number.Trim(),isVerified));
         }
 
+        
+        public bool IsNumberVerified()=>IsVerified;
         protected override IEnumerable<object> GetEqualityComponents()
         {
             throw new NotImplementedException();

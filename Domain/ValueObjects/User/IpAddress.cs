@@ -9,6 +9,8 @@ namespace Domain.ValueObjects.User
         public string Value { get; }
         public IpVersion Version { get; }
 
+
+
         private IpAddress(string value, IpVersion version)
         {
             Value = value;

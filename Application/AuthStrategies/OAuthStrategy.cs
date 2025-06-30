@@ -1,12 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿
+using Application.Dtos;
+using Application.Dtos.Requests;
+using Application.Interfaces.Pattern;
 
 namespace Application.AuthStrategies
 {
-    internal class OAuthStrategy
+    public class OAuthStrategy : IAuthStrategy
     {
+        public Task<AuthResponse> LoginAsync(LoginRequest request)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<bool> LogoutAsync(LoginRequest request)
+        {
+            throw new NotImplementedException();
+        }
     }
+
+
 }

@@ -10,9 +10,9 @@ namespace Domain.Interfaces.Repository
 
         Task<JwtAuthSession?> GetSessionByIdAsync(Guid sessionId);
         Task<JwtAuthSession?> GetSessionByUserIdAsync(Guid userId);
-        Task<JwtAuthSession?> GetSessionByJwtIdAsync(string refreshToken);
+        Task<JwtAuthSession?> GetSessionByRefreshTokenAsync(string refreshToken);
         Task<bool> AddSessionAsync(JwtAuthSession session);
-        Task<bool> UpdateSessionAsync(Guid sessionId, JwtAuthSession session);
+        Task<bool> UpdateSessionAsync(JwtAuthSession session);
         Task<bool> DeleteSessionAsync(Guid sessionId);
 
     }

@@ -7,12 +7,11 @@ namespace Domain.Entities.Jwt
 {
 
     // For Jwt flow, is stored in the database but just the needed Fields   
-    // using the JwtAuthSessionDto so i don't store the tokens 
-    // First create the access token, then i create the refresh token
+    // First create the access token, then create the refresh token
     // the refresh has to have the same userId and JWTId as the access token
     public class JwtAuthSession : Entity<Guid>
     {
-        public Guid UserId { get; private set; }
+        public Guid UserId { get; private set; }    
         public JwtAccessToken Token { get; private set; }
         public RefreshToken RefreshToken { get; private set; }
 
@@ -21,6 +20,8 @@ namespace Domain.Entities.Jwt
         public DeviceFingerprint DeviceFingerprint { get; private set; }
         public IpAddress IpAddress { get; private set; }
         public DateTime CreatedAt { get; private set; }
+
+
 
 
 

@@ -10,4 +10,5 @@ namespace Domain.Enums
         Api,
         Other
     }
+
 }

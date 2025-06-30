@@ -58,7 +58,7 @@ namespace Domain.ValueObjects
             yield return Success;
             yield return ErrorMessage ?? string.Empty;
             yield return JwtToken?.Value ?? string.Empty;
-            yield return CookieToken?.Value ?? string.Empty;
+            yield return CookieToken?.SessionId ?? string.Empty;
             yield return RefreshToken?.UserId.ToString()?? string.Empty;
 
 

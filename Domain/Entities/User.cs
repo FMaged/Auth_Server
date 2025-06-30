@@ -2,7 +2,8 @@
 using Domain.Shared;
 using Domain.ValueObjects;
 using Domain.ValueObjects.User;
-using Domain.ValueObjects.User.UserPassword.Helpers;
+using Domain.ValueObjects.User.Helpers;
+using Domain.ValueObjects.User.UserPassword;
 
 
 namespace Domain.Entities
@@ -10,7 +11,7 @@ namespace Domain.Entities
     public class User:Entity<Guid>
     {
         private const int MaxFailedAttempts = 3;
-        public Password Password { get; private set; }
+        public HashedPassword PasswordHash { get; private set; }
 
         public Email Email { get; private set; }
 
@@ -18,43 +19,42 @@ namespace Domain.Entities
         
         public bool IsActive { get; private set; }
         public DeviceFingerprint DeviceFingerprint { get; private set; }
-        public UserTimestamps UserTimestamps { get; private set; }
         
         public IpAddress IpAddress { get; private set; }
         public PhoneNumber PhoneNumber { get; private set; }
-        public bool PhoneNumberConfirmed { get; private set; }
-        public UserSecurityData SecurityData { get; private set; }
         
+        public UserSecurityData SecurityData { get; private set; }
+        public UserTimestamps UserTimestamps { get; private set; }
 
 
-        private User(Guid id, Email email, Password password, UserName userName, bool isActive, 
+
+        private User(Guid id, Email email, HashedPassword password, UserName userName, bool isActive, 
                     UserTimestamps timestamps, DeviceFingerprint deviceFingerprint, 
-                    IpAddress ipAddress,PhoneNumber phoneNumber, bool phoneConfirmed, 
+                    IpAddress ipAddress,PhoneNumber phoneNumber,
                     UserSecurityData userSecurityData) : base(id)
 
         {
             Email = email;
-            Password = password;
+            PasswordHash = password;
             UserName = userName;
             IsActive = isActive;
             UserTimestamps = timestamps;
             IpAddress = ipAddress;
             DeviceFingerprint = deviceFingerprint;
-            PhoneNumberConfirmed = phoneConfirmed;
             PhoneNumber = phoneNumber;
             SecurityData=userSecurityData;
             AddDomainEvent(new UserCreatedEvent(this.Id, this.UserName, this.Email,this.IpAddress, this.DeviceFingerprint));
 
         }
 
-        public static Result<User> Create(string id,string email, string password, string userName, bool isActive, 
+        public static Result<User> Create(string email, string password, string userName, bool isActive, 
                     UserTimestamps timestamps, string ipAddress, 
-                    string devicePrint, string[] phoneNumber,bool isPhoneConfirmed, UserSecurityData userSecurityData)
+                    string devicePrint, string[] phoneNumber, UserSecurityData userSecurityData)
         {
             var emailResult = Email.Create(email);
             if (!emailResult.IsSuccess)
                 return Result<User>.Failure(emailResult.Error);
-            var passwordResult = Password.Create(password,new PasswordOptions());
+            var passwordResult = HashedPassword.Create(password);//default hashing algorithm Argon2id
             if (!passwordResult.IsSuccess)
                 return Result<User>.Failure(passwordResult.Error);
             var userNameResult = UserName.Create(userName);
@@ -70,26 +70,26 @@ namespace Domain.Entities
             var phoneNumberResult = PhoneNumber.Create(phoneNumber[0], phoneNumber[1]);
             if (!phoneNumberResult.IsSuccess)
                 return Result<User>.Failure(phoneNumberResult.Error);
-            var userIdResult = string.IsNullOrWhiteSpace(id) ? Guid.NewGuid() : Guid.Parse(id);
+            
 
 
-            var user = new User(userIdResult, emailResult.Value, passwordResult.Value, userNameResult.Value,
+            var user = new User(Guid.NewGuid(), emailResult.Value, passwordResult.Value, userNameResult.Value,
                     isActive, timestamps, deviceFingerprint.Value,
-                    ipAddressResult.Value, phoneNumberResult.Value, isPhoneConfirmed, 
+                    ipAddressResult.Value, phoneNumberResult.Value, 
                     userSecurityData
             );
 
             return Result<User>.Success(user);
         }
 
-        public static Result<User> Create(Guid id, Email email, Password password, UserName userName, bool isActive,
+        public static Result<User> CreateO(Guid id, Email email, HashedPassword password, UserName userName, bool isActive,
                     UserTimestamps timestamps, DeviceFingerprint deviceFingerprint, 
-                    IpAddress ipAddress, PhoneNumber phoneNumber, bool phoneConfirmed,
+                    IpAddress ipAddress, PhoneNumber phoneNumber,
                     UserSecurityData userSecurityData)
         { 
            
             var user = new User(id,email,password,userName, isActive, timestamps, deviceFingerprint,
-                        ipAddress, phoneNumber, phoneConfirmed,userSecurityData);
+                        ipAddress, phoneNumber,userSecurityData);
             return Result<User>.Success(user);
         }
 
@@ -112,13 +112,11 @@ namespace Domain.Entities
         }
         public Result VerifyEmail ()
         {
-            Result<Email> emailResult = Email.CreateVerified(Email.Value);
+            Result<Email> emailResult = Email.Verify();
             if(!emailResult.IsSuccess)
                 return Result.Failure(emailResult.Error);
 
-            // the ! operator is used here to assert that the Value is not null
-            // the Value can not be null because !emailResult.IsSuccess is true
-            this.Email = emailResult.Value!;
+            this.Email = emailResult.Value;
             UserTimestamps userTimestamps = new(UserTimestamps.CreatedAt, UserTimestamps.LastLoginAt,
                     UserTimestamps.LastPasswordChangeAt, UserTimestamps.LastEmailChangeAt, UserTimestamps.LastUserNameChangeAt,
                     DateTime.UtcNow);
@@ -130,14 +128,16 @@ namespace Domain.Entities
             return Result.Success();
                 
         }
-        public Result UpdatePassword(string currentPassword,string newPassword)
+        public Result UpdatePassword(HashedPassword newPassword)
         {
-            var passwordResult=Password.Create(newPassword,new PasswordOptions());
-            if (!passwordResult.IsSuccess)
-                return Result.Failure(passwordResult.Error);
-            if (Password == passwordResult.Value)
+            
+            if (PasswordHash == newPassword)
                 return Result.Failure("Password can not the same");
-            Password = passwordResult.Value;
+            PasswordHash = newPassword;
+            UserTimestamps userTimestamps = new(UserTimestamps.CreatedAt, UserTimestamps.LastLoginAt,
+                DateTime.UtcNow, UserTimestamps.LastEmailChangeAt, UserTimestamps.LastUserNameChangeAt,
+                UserTimestamps.EmailConfirmedAt);
+            UserTimestamps = userTimestamps;
             AddDomainEvent(new UserPasswordUpdateEvent(this.Id,this.UserName,this.Email,this.IpAddress,this.DeviceFingerprint));
             return Result.Success();
         }
@@ -150,6 +150,10 @@ namespace Domain.Entities
                 return Result.Failure("New username must be different");
             var OldUserName=UserName;
             UserName = userNameResult.Value;
+            UserTimestamps userTimestamps = new(UserTimestamps.CreatedAt, UserTimestamps.LastLoginAt,
+                UserTimestamps.LastPasswordChangeAt, UserTimestamps.LastEmailChangeAt, DateTime.UtcNow,
+                UserTimestamps.EmailConfirmedAt);
+            UserTimestamps = userTimestamps;
             AddDomainEvent(new UserNameUpdatedEvent(this.Id, OldUserName, this.UserName,this.Email,this.IpAddress,this.DeviceFingerprint));
             return Result.Success();
         }

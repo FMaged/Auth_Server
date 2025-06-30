@@ -7,7 +7,7 @@ namespace Domain.Entities.Jwt
     public class RefreshToken : Entity<Guid>
     {
         public Guid UserId { get; private set; }
-        public string HashedToken { get; private set; }
+        public string Token { get; private set; }
         public DateTime ExpiresAt { get; private set; }
         public DeviceFingerprint DeviceFingerprint { get; private set; }
         public IpAddress IpAddress { get; private set; }
@@ -18,7 +18,7 @@ namespace Domain.Entities.Jwt
         private RefreshToken(
            Guid id,
            Guid userId,
-           string tokenHash,
+           string token,
            DateTime expiresAt,
            DeviceFingerprint deviceFingerprint,
            IpAddress ipAddress,
@@ -27,7 +27,7 @@ namespace Domain.Entities.Jwt
            bool isUsed) : base(id)
         {
             UserId = userId;
-            HashedToken = tokenHash;
+            Token = token;
             ExpiresAt = expiresAt;
             DeviceFingerprint = deviceFingerprint;
             IpAddress = ipAddress;
